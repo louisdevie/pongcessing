@@ -46,6 +46,8 @@ void setup() {
 }
 
 void draw() {
+  // actualisation
+
   if(countdown <= 0 && (ballx < 0 || out)) { // si en phase de jeu et balle pas encore en jeu out bale sortie
     out = false;
     ballx = width/2;
@@ -64,40 +66,43 @@ void draw() {
     bally += sin(balld)*vel; // déplacement de la balle
     
     rcollision = (cos(balld) < 0 && ballx < 60+radius && ry-75 < bally && bally < ry+75);
-    bcollision = (cos(balld) > 0 && ballx > width-(60+radius) && by-75 < bally && bally < by+75);
+    bcollision = (cos(balld) > 0 && ballx > width-(60+radius) && by-75 < bally && bally < by+75); // tests de collision
     
-    if(bally < radius || bally > height-radius) {balld = -balld;}
-    else if(ballx > width-radius) {out = true; rscore ++; formatScore();}
-    else if(ballx < radius) {out = true; bscore ++; formatScore();}  
+    if(bally < radius || bally > height-radius) {balld = -balld;} // rebonds contre les bords haut et bas
+    else if(ballx > width-radius) {out = true; rscore ++; formatScore();} // sortie à droite
+    else if(ballx < radius) {out = true; bscore ++; formatScore();} // sortie à gauche
     else if(rcollision || bcollision) {
-      balld = PI-balld;
-      float rnd = +random(-0.3, 0.3);
-      if(abs(cos(balld+rnd)) > .5) {
-        balld += rnd;
+      balld = PI-balld; // rebond contre une raquette
+      float rnd = +random(-0.3, 0.3); // modification aléatoire
+      if(abs(cos(balld+rnd)) > .5) { // si la modfication ne tourne pas la direction trop à la verticale ...
+        balld += rnd; // ... l'appliquer
       }
     }
   }
   
-  if(countdown <= 0 && out) {
+  if(countdown <= 0 && out) { // quand la balle est sortie
     countdown = 4;
-    counter = millis() + 5000;
+    counter = millis() + 5000; // mettre le compte à rebours
   }
   
-  if(countdown != 5 && countdown > 0) {
+  if(countdown != 5 && countdown > 0) { // décompter
     countdown = min(int((counter - millis())/1000 + 1), 4);
   }
   
-  background(0);
+  // dessin
+  
+  background(0); // nettoyer la fenêtre
   
   if(rstate==1) {fill(255, 0, 0);} else {fill(255, 200, 200);}
-  rect(40, ry-75, 20, 150);
+  rect(40, ry-75, 20, 150); // raquette rouge
   
   if(bstate==1) {fill(50, 100, 255);} else {fill(150, 210, 255);}
-  rect(width-60, by-75, 20, 150);
+  rect(width-60, by-75, 20, 150); // raquette bleue
   
   fill(255);
-  ellipse(ballx, bally, radius*2, radius*2);
+  ellipse(ballx, bally, radius*2, radius*2); // balle
   
+  // message au millieu de l'écran
   if(rstate == 0) {
     fill(255);
     textSize(32);
@@ -118,9 +123,13 @@ void draw() {
     }
   }
   
-  server.write(rstate + " " + countdown + " " + ry + " " + by + " " + ballx + " " + bally + " " + rscore + " " + bscore + "\n");
-  client = server.available();
+  // réseau
   
+  // evoyer toutes les variables au client
+  server.write(rstate + " " + countdown + " " + ry + " " + by + " " + ballx + " " + bally + " " + rscore + " " + bscore + "\n");
+  
+  // recevoir le statut et la position de la souris du client
+  client = server.available();
   if (client != null) {
     input = client.readString(); 
     input = input.substring(0, input.indexOf("\n"));
@@ -130,10 +139,12 @@ void draw() {
   }
 }
 
+// quand la fenêre est cliquée, mettre prêt
 void mouseClicked() {
   rstate = 1;
 }
 
+// formatage du score comme "2 - 1"
 void formatScore() {
   scoremsg = rscore + " - " + bscore;
 }
